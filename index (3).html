@@ -1,0 +1,254 @@
+<script type="text/javascript">
+    var gk_isXlsx = false;
+    var gk_xlsxFileLookup = {};
+    var gk_fileData = {};
+    function filledCell(cell) {
+      return cell !== '' && cell != null;
+    }
+    function loadFileData(filename) {
+    if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+        try {
+            var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+            var firstSheetName = workbook.SheetNames[0];
+            var worksheet = workbook.Sheets[firstSheetName];
+            var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+            var filteredData = jsonData.filter(row => row.some(filledCell));
+            var headerRowIndex = filteredData.findIndex((row, index) =>
+              row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+            );
+            if (headerRowIndex === -1 || headerRowIndex > 25) {
+              headerRowIndex = 0;
+            }
+            var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex));
+            csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+            return csv;
+        } catch (e) {
+            console.error(e);
+            return "";
+        }
+    }
+    return gk_fileData[filename] || "";
+    }
+</script>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SpencerXD UPI Payment</title>
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Poppins:wght@400;600&display=swap');
+
+    body {
+        font-family: 'Poppins', sans-serif;
+        margin: 0;
+        height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background: radial-gradient(circle at center, #1a1a3d, #0d0d1f);
+        overflow: hidden;
+        position: relative;
+    }
+
+    .container {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        padding: 20px;
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        text-align: center;
+        max-width: 300px;
+        width: 85%;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        animation: slideIn 1.2s ease-out;
+    }
+
+    @keyframes slideIn {
+        0% { opacity: 0; transform: scale(0.8); }
+        100% { opacity: 1; transform: scale(1); }
+    }
+
+    h1 {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 2em;
+        margin: 0;
+        background: linear-gradient(45deg, #00ffcc, #ff007a);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+        text-shadow: 0 0 15px rgba(0, 255, 204, 0.7);
+        animation: neonGlow 1.5s ease-in-out infinite alternate;
+    }
+
+    @keyframes neonGlow {
+        from { text-shadow: 0 0 8px rgba(0, 255, 204, 0.7), 0 0 15px rgba(255, 0, 122, 0.5); }
+        to { text-shadow: 0 0 15px rgba(0, 255, 204, 1), 0 0 25px rgba(255, 0, 122, 0.8); }
+    }
+
+    h2 {
+        color: #fff;
+        font-size: 1.2em;
+        margin: 8px 0;
+        font-weight: 400;
+        letter-spacing: 0.8px;
+    }
+
+    .qr-code {
+        width: 160px;
+        height: 160px;
+        margin: 15px auto;
+        border: 5px solid #fff;
+        border-radius: 10px;
+        box-shadow: 0 0 20px rgba(0, 255, 204, 0.3);
+        transition: transform 0.4s ease, box-shadow 0.4s ease;
+    }
+
+    .qr-code:hover {
+        transform: scale(1.1) rotate(2deg);
+        box-shadow: 0 0 40px rgba(0, 255, 204, 0.6);
+    }
+
+    .upi-id {
+        font-size: 1em;
+        color: #e0e0e0;
+        background: rgba(255, 255, 255, 0.05);
+        padding: 8px;
+        border-radius: 8px;
+        margin: 15px 0;
+        font-weight: 500;
+        letter-spacing: 0.4px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .pay-now-btn {
+        display: inline-block;
+        background: linear-gradient(90deg, #00ffcc, #ff007a);
+        color: #fff;
+        padding: 10px 30px;
+        border: none;
+        border-radius: 40px;
+        font-size: 1em;
+        font-family: 'Orbitron', sans-serif;
+        text-transform: uppercase;
+        text-decoration: none;
+        cursor: pointer;
+        position: relative;
+        overflow: hidden;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(0, 255, 204, 0.4);
+    }
+
+    .pay-now-btn::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+        transition: 0.5s;
+    }
+
+    .pay-now-btn:hover::before {
+        left: 100%;
+    }
+
+    .pay-now-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(0, 255, 204, 0.6);
+        background: linear-gradient(90deg, #ff007a, #00ffcc);
+    }
+
+    .pay-now-btn:active {
+        transform: translateY(0);
+        box-shadow: 0 2px 10px rgba(0, 255, 204, 0.3);
+    }
+
+    .particle {
+        position: absolute;
+        border-radius: 50%;
+        background: rgba(0, 255, 204, 0.5);
+        pointer-events: none;
+        animation: float 8s infinite;
+    }
+
+    @keyframes float {
+        0% { transform: translate(0, 0); opacity: 1; }
+        100% { transform: translate(var(--x), var(--y)); opacity: 0; }
+    }
+
+    .stars {
+        position: absolute;
+        width: 2px;
+        height: 2px;
+        background: #fff;
+        border-radius: 50%;
+        animation: twinkle 3s infinite;
+    }
+
+    @keyframes twinkle {
+        0%, 100% { opacity: 0.2; }
+        50% { opacity: 1; }
+    }
+</style>
+</head>
+<body>
+<div class="container">
+    <h1>SpencerXD</h1>
+    <h2>Pay via UPI</h2>
+    <img src="image.png" alt="QR Code" class="qr-code">
+    <div class="upi-id">shahnawaz.dx@fam</div>
+    <a href="upi://pay?pa=shahnawaz.dx@fam&pn=SpencerXD&am=&cu=INR" class="pay-now-btn" onclick="handleUPILink(event)">Pay Now</a>
+</div>
+<script>
+    function handleUPILink(event) {
+        event.preventDefault();
+        const upiLink = "upi://pay?pa=shahnawaz.dx@fam&pn=SpencerXD&am=&cu=INR";
+        const fallbackUrl = "https://play.google.com/store/apps/details?id=com.google.android.apps.nbu.paisa.user"; // Google Pay as fallback
+        try {
+            window.location.href = upiLink;
+            setTimeout(() => {
+                if (document.hasFocus()) {
+                    alert("No UPI app found. Please install a UPI app like Google Pay, PhonePe, or Paytm.");
+                    window.location.href = fallbackUrl;
+                }
+            }, 1000);
+        } catch (e) {
+            console.error("UPI link failed:", e);
+            alert("Failed to open UPI app. Please install a UPI app.");
+            window.location.href = fallbackUrl;
+        }
+    }
+
+    function createParticle() {
+        const particle = document.createElement('div');
+        particle.classList.add('particle');
+        const size = Math.random() * 6 + 3;
+        particle.style.width = `${size}px`;
+        particle.style.height = `${size}px`;
+        particle.style.left = `${Math.random() * window.innerWidth}px`;
+        particle.style.top = `${Math.random() * window.innerHeight}px`;
+        particle.style.setProperty('--x', `${(Math.random() - 0.5) * 200}px`);
+        particle.style.setProperty('--y', `${(Math.random() - 0.5) * 200}px`);
+        document.body.appendChild(particle);
+        setTimeout(() => particle.remove(), 8000);
+    }
+
+    function createStar() {
+        const star = document.createElement('div');
+        star.classList.add('stars');
+        star.style.left = `${Math.random() * window.innerWidth}px`;
+        star.style.top = `${Math.random() * window.innerHeight}px`;
+        star.style.animationDelay = `${Math.random() * 3}s`;
+        document.body.appendChild(star);
+    }
+
+    setInterval(createParticle, 300);
+    for (let i = 0; i < 30; i++) {
+        createStar();
+    }
+</script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'93cfb2f1aaea4558',t:'MTc0Njc3ODAwMi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>
+</body>
+</html>
