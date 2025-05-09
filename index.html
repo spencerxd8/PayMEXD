@@ -204,18 +204,18 @@
     function handleUPILink(event) {
         event.preventDefault();
         const upiLink = "upi://pay?pa=shahnawaz.dx@fam&pn=SpencerXD&am=&cu=INR";
-        const fallbackUrl = "https://fampay.in/"; // FamPay as primary fallback
+        const fallbackUrl = "https://tinyurl.com/famappsupport"; // FamPay support page
         try {
             window.location.href = upiLink;
             setTimeout(() => {
                 if (document.hasFocus()) {
-                    alert("No UPI app found. Please install a UPI app like FamPay, Google Pay, PhonePe, or Paytm.");
+                    alert("Payment failed. This could be due to:\n- Exceeding FamPay's transaction limit (check your daily limit in FamApp).\n- Incomplete KYC or account issues.\n- Technical glitches.\nPlease try again later, use another UPI app, or contact FamPay support at https://tinyurl.com/famappsupport.");
                     window.location.href = fallbackUrl;
                 }
             }, 1000);
         } catch (e) {
-            console.error("UPI link failed:", e);
-            alert("Failed to open UPI app. Please install a UPI app like FamPay, Google Pay, PhonePe, or Paytm.");
+            console.error("UPI link failed with error:", e.message);
+            alert("Payment failed. This could be due to:\n- Exceeding FamPay's transaction limit (check your daily limit in FamApp).\n- Incomplete KYC or account issues.\n- Technical glitches.\nPlease try again later, use another UPI app, or contact FamPay support at https://tinyurl.com/famappsupport.");
             window.location.href = fallbackUrl;
         }
     }
